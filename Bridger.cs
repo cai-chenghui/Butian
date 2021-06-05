@@ -97,7 +97,7 @@ namespace Butian
             {
                 case "Object":
                 case "GameObject":
-                    return BridgeImage(path, param, t.TryCast<GameObject>());
+                    return BridgeImage(path, param, t?.TryCast<GameObject>());
                 case "Sprite":
                     var imgGo = Object.Instantiate(_go_template);
                     imgGo.name = t?.name ?? path.Replace("/", "");
@@ -125,16 +125,18 @@ namespace Butian
             GameObject template = null;
             if (templatePath != null)
             {
-                if (isSprite)
-                {
-                    var sRenderer = imageObj.GetComponentInChildren<SpriteRenderer>();
-                    sRenderer.sprite = Object.Instantiate(templatePath.ResourcesLoad(Il2CppType.Of<Sprite>())?.Cast<Sprite>());
-                    template = imageObj;
-                }
-                else
-                {
-                    template = Object.Instantiate(templatePath.ResourcesLoad(Il2CppType.Of<GameObject>())?.Cast<GameObject>());
-                }
+                var temp = templatePath.ResourcesLoad();
+                if (temp != null)
+                    if (isSprite)
+                    {
+                        var sRenderer = imageObj.GetComponentInChildren<SpriteRenderer>();
+                        sRenderer.sprite = Object.Instantiate(temp.Cast<Sprite>());
+                        template = imageObj;
+                    }
+                    else
+                    {
+                        template = Object.Instantiate(temp.Cast<GameObject>());
+                    }
             }
             MelonDebug.Msg($"BridgeImage {path} 3");
             var ic = Assets.CopyAsset(path, template ?? imageObj);
@@ -171,14 +173,20 @@ namespace Butian
                     MelonLogger.Warning($"The picture[{path}] is too big, Compress it!!! pleeeease~");
                 }
                 Texture2D texture = new Texture2D((int)spriteParam.Rect.Size.X, (int)spriteParam.Rect.Size.Y, TextureFormat.ARGB32, false);
+                if (!ImageConversion.LoadImage(texture, image))
+                {
+                    throw new InvalidOperationException("Image failed to load");
+                }
                 renderer.sprite = Sprite.Create(texture, spriteParam.Rect, spriteParam.Pivot, spriteParam.PixelsPerUnit, spriteParam.Extrude, spriteParam.MeshType, spriteParam.Border, spriteParam.GenerateFallbackPhysicsShape);
             }
-            MelonDebug.Msg($"BridgeImage {path} 8");
-            if (!ImageConversion.LoadImage(renderer.sprite.texture, image))
+            else
             {
-                throw new InvalidOperationException("Image failed to load");
+                if (!ImageConversion.LoadImage(renderer.sprite.texture, image))
+                {
+                    throw new InvalidOperationException("Image failed to load");
+                }
             }
-            MelonDebug.Msg($"BridgeImage {path} 9");
+            MelonDebug.Msg($"BridgeImage {path} 8");
             return ic;
         }
 

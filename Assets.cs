@@ -138,7 +138,7 @@ namespace Butian
             {
                 var b = _assetes.TryGetValue(path, out var asset);
                 go = asset?.Get();
-                return b;
+                return b && go != null;
             }
             catch (Exception e)
             {

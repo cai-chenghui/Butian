@@ -29,10 +29,10 @@ namespace Butian
         [YamlIgnore]
         private static readonly string configPath = Path.Combine(Butian.GetHome(), "config.yml");
         [YamlIgnore]
-        private const float CurrentVersion = 1.0F;
+        private const int CurrentVersion = 2;
 
         [YamlMember(Alias = "version", Description = "配置文件版本，跟补天版本不同步，用来自动更新配置文件的，不建议修改（可以修改更小的版本让补天自动获取最新版本配置）", ApplyNamingConventions = false)]
-        public float Version { get; set; } = CurrentVersion;
+        public int Version { get; set; } = CurrentVersion;
         [YamlMember(Alias = "prefetch",
             Description = @"预加载配置
 # 其实除了立绘，其他的完全没必要开启预加载，就算立绘也可以不开启，然后设置为缓存，这样就只有第一次进城镇可能会慢点
@@ -115,5 +115,7 @@ namespace Butian
         public bool Import { get; set; } = false;
         [YamlMember(Alias = "overwrite", Description = "若补天已有的资源是否覆盖导入，若为 false，则只会导入补天没有的", ApplyNamingConventions = false)]
         public bool Overwrite { get; set; } = false;
+        [YamlMember(Alias = "thread", Description = "导入的线程池大小，默认是你逻辑核心 * 2，如果太卡可以调小些", ApplyNamingConventions = false)]
+        public int ThreadCount { get; set; } = 8;
     }
 }

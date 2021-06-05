@@ -31,7 +31,7 @@ namespace Butian
     public class HylasHelper
     {
         // 最大线程根据 CPU 核心数来
-        private static readonly int _thread_count = Environment.ProcessorCount * 2;
+        private static readonly int _thread_count = Math.Min(Environment.ProcessorCount * 2, Butian.Config?.Hylas?.ThreadCount ?? 8);
         private static readonly string _hylas_home = Path.Combine(MelonUtils.GameDirectory, "Mods", "Hylas");
         private const string _param_file = "sprite.json";
         private const string _image_file = "image.png";
@@ -101,15 +101,19 @@ namespace Butian
                 // 立绘 都设置成新 Sprite
                 param.NewSprite = true;
             }
-            if (guiguPath.StartsWith("Battle/Human/"))
+            if (guiguPath.StartsWith("Game/Portrait/") || guiguPath.StartsWith("Battle/Human/"))
             {
-                // 战斗小人，设置模板
+                // 立绘 战斗小人，设置模板
                 var templateId = "101";
 
                 var match = _path_pattern.Match(path);
 
                 var root = match.Groups[1].Value;
                 var templateConfig = Path.Combine(_hylas_home, root, ".template.txt");
+                if (guiguPath.StartsWith("Game/Portrait/"))
+                {
+                    root = Path.Combine("Game/Portrait/", root);
+                }
 
                 if (File.Exists(templateConfig))
                 {

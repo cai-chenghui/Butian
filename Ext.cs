@@ -18,6 +18,7 @@
 using System;
 using System.IO;
 using UnhollowerBaseLib;
+using UnhollowerRuntimeLib;
 using Object = UnityEngine.Object;
 
 namespace Butian
@@ -31,6 +32,12 @@ namespace Butian
         static Ext()
         {
             _load = IL2CPP.ResolveICall<Load>("UnityEngine.Resources::Load(System.String,System.Type)");
+        }
+
+        public static Object ResourcesLoad(this string path)
+        {
+            var ptr = _load(IL2CPP.ManagedStringToIl2Cpp(path), IL2CPP.Il2CppObjectBaseToPtrNotNull(Il2CppType.Of<Object>()));
+            return ptr != IntPtr.Zero ? new Object(ptr) : null;
         }
 
         public static Object ResourcesLoad(this string path, Il2CppSystem.Type systemTypeInstance)
