@@ -16,8 +16,10 @@
 using MelonLoader;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -25,6 +27,9 @@ namespace Butian
 {
     internal class Assets
     {
+        public const string ASSET_FILE = "asset.yml";
+        public const string CACHE_METHOD_FILE = ".cache.method";
+
         internal class Asset
         {
             private string path;
@@ -42,6 +47,8 @@ namespace Butian
 
             internal void Update()
             {
+                var sw = new Stopwatch();
+                sw.Start();
                 try
                 {
                     asset = Bridger.Bridge(path);
@@ -51,6 +58,8 @@ namespace Butian
                 {
                     MelonLogger.Warning($"Cache failed {path}\nreason: {e}");
                 }
+                sw.Stop();
+                MelonDebug.Msg($"Time-consuming caching {path}: {sw.Elapsed}");
             }
 
             internal void Expire()
@@ -72,29 +81,6 @@ namespace Butian
         private static GameObject _root;
 
         private static readonly FileSystemWatcher _watcher = new FileSystemWatcher(Butian.GetAssetsPath());
-        private const string _cache_method_file = ".cache.method";
-
-        static Assets()
-        {
-
-            _watcher.NotifyFilter = NotifyFilters.Attributes
-                                    | NotifyFilters.DirectoryName
-                                    | NotifyFilters.FileName
-                                    | NotifyFilters.LastWrite
-                                    | NotifyFilters.Security
-                                    | NotifyFilters.Size;
-
-            _watcher.Changed += Handler;
-            _watcher.Created += Handler;
-            _watcher.Renamed += Handler;
-            _watcher.Deleted += Handler;
-            _watcher.Error += OnError;
-
-            _watcher.IncludeSubdirectories = true;
-            _watcher.EnableRaisingEvents = true;
-            _watcher.Filter = "asset.yml|*.png|*.wav";
-
-        }
 
         private static void OnError(object sender, ErrorEventArgs e)
         {
@@ -103,7 +89,8 @@ namespace Butian
 
         private static void Handler(object sender, FileSystemEventArgs e)
         {
-
+            if (!new Regex(@".*\.(yml)|(png)|(wav)]$").IsMatch(e.Name) && e.ChangeType != WatcherChangeTypes.Deleted)
+                return;
             var path = e.FullPath.GetResourcePath();
 
             MelonLogger.Msg($"{path} {e.ChangeType} {e.Name}");
@@ -112,7 +99,7 @@ namespace Butian
                 switch (e.ChangeType)
                 {
                     case WatcherChangeTypes.Deleted:
-                        _assetes.Remove(path);
+                        Remove(path);
                         break;
                     case WatcherChangeTypes.Created:
                     case WatcherChangeTypes.Changed:
@@ -160,8 +147,21 @@ namespace Butian
             }
         }
 
+        private static void Remove(string path)
+        {
+            if (Path.Combine(Butian.GetAssetsPath(), path, ASSET_FILE).Exists())
+            {
+                return;
+            }
+            _assetes.Remove(path);
+        }
+
         private static void AddOrUpdate(string path, CacheMethod cacheMethod = CacheMethod.normal)
         {
+            if (!Path.Combine(Butian.GetAssetsPath(), path, ASSET_FILE).Exists())
+            {
+                return;
+            }
             if (_assetes.ContainsKey(path))
             {
                 _assetes[path].Expire();
@@ -174,7 +174,7 @@ namespace Butian
                 }
                 catch (Exception e)
                 {
-                    MelonLogger.Warning($"Cache failed, path = {path}, \nreason: {e}");
+                    MelonLogger.Warning($"Cache failed, path = {path}\nreason: {e}");
                 }
             }
         }
@@ -183,7 +183,7 @@ namespace Butian
         internal static void Scan()
         {
             var prefetchConfig = Butian.Config?.Prefetch;
-            foreach (var file in Directory.EnumerateFiles(Butian.GetAssetsPath(), "asset.yml", SearchOption.AllDirectories))
+            foreach (var file in Directory.EnumerateFiles(Butian.GetAssetsPath(), ASSET_FILE, SearchOption.AllDirectories))
             {
                 var path = file.GetResourcePath();
                 var cacheMethod = CacheMethod.normal;
@@ -198,7 +198,7 @@ namespace Butian
                         }
                     }
                 }
-                var cache_method_path = file.Replace("asset.yml", _cache_method_file);
+                var cache_method_path = file.Replace(ASSET_FILE, CACHE_METHOD_FILE);
                 if (cache_method_path.Exists())
                 {
                     var str = File.ReadAllText(cache_method_path);
@@ -214,13 +214,12 @@ namespace Butian
                     }
                 }
 
-                //MelonDebug.Msg($"Scan: {path} CacheMethod: {cacheMethod}");
-                MelonLogger.Msg($"Scan: {path} CacheMethod: {cacheMethod}");
+                MelonDebug.Msg($"Scan: {path} CacheMethod: {cacheMethod}");
                 AddOrUpdate(path, cacheMethod);
             }
         }
 
-        internal static void Prefetch()
+        internal static int Prefetch()
         {
             _root = new GameObject
             {
@@ -228,10 +227,30 @@ namespace Butian
                 active = false
             };
             Object.DontDestroyOnLoad(_root);
-            foreach (var item in _assetes.Values.Where( i => i.CacheMethod == CacheMethod.prefetch))
+
+            _watcher.NotifyFilter = NotifyFilters.Attributes
+                                    | NotifyFilters.DirectoryName
+                                    | NotifyFilters.FileName
+                                    | NotifyFilters.LastWrite
+                                    | NotifyFilters.Security
+                                    | NotifyFilters.Size;
+
+            _watcher.Changed += Handler;
+            _watcher.Created += Handler;
+            _watcher.Renamed += Handler;
+            _watcher.Deleted += Handler;
+            _watcher.Error += OnError;
+
+            _watcher.IncludeSubdirectories = true;
+            _watcher.EnableRaisingEvents = true;
+            _watcher.Filter = string.Format("{0}|*.png|*.wav", ASSET_FILE);
+
+            var list = _assetes.Values.Where(i => i.CacheMethod == CacheMethod.prefetch);
+            foreach (var item in list)
             {
                 item.Update();
             }
+            return list.Count();
         }
     }
 

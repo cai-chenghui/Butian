@@ -91,7 +91,7 @@ namespace Butian
             {
                 throw new NotSupportedException($"Unsupported type for {path}");
             }
-            var param = AssetParam.LoadFromYaml(Path.Combine(AbsolutelyPhysicalPath(path), "asset.yml"));
+            var param = AssetParam.LoadFromYaml(Path.Combine(AbsolutelyPhysicalPath(path), Assets.ASSET_FILE));
             var t = path.ResourcesLoad(il2CppType);
             switch (il2CppType.Name)
             {
@@ -112,13 +112,15 @@ namespace Butian
 
         private static GameObject BridgeImage(string path, AssetParam param, GameObject imageObj, bool isSprite = false)
         {
+            MelonDebug.Msg($"BridgeImage {path} 1");
             var assets = param.Assets;
             var spriteParam = param.Sprite[assets?.Length > 0 ? assets[0] : param.Sprite?.Keys?.First()];
             if (spriteParam == null)
             {
                 throw new NullReferenceException("SpriteParam is null");
             }
-            var templatePath = spriteParam.Template;
+            MelonDebug.Msg($"BridgeImage {path} 2");
+            var templatePath = spriteParam.Template ?? param.Template;
             GameObject template = imageObj;
             if (templatePath != null)
             {
@@ -132,12 +134,14 @@ namespace Butian
                     template = templatePath.ResourcesLoad(Il2CppType.Of<GameObject>())?.Cast<GameObject>();
                 }
             }
+            MelonDebug.Msg($"BridgeImage {path} 3");
             var ic = Assets.CopyAsset(path, template ?? imageObj);
             if (ic == null)
             {
                 throw new NullReferenceException("GameObject copy is null");
             }
-            if (param.Hidden != null || param.Hidden.Length > 0)
+            MelonDebug.Msg($"BridgeImage {path} 4");
+            if (param.Hidden?.Length > 0)
             {
                 var nodes = template.GetComponentsInChildren<Transform>().Where(i => param.Hidden.Contains(i.name));
                 foreach (Transform child in nodes)
@@ -145,26 +149,34 @@ namespace Butian
                     child.gameObject.active = false;
                 }
             }
+            MelonDebug.Msg($"BridgeImage {path} 5");
             var image = File.ReadAllBytes(Path.Combine(AbsolutelyPhysicalPath(path), spriteParam?.File));
             if (image == null || image.Length == 0)
             {
                 throw new NullReferenceException($"File {spriteParam?.File} is null");
             }
+            MelonDebug.Msg($"BridgeImage {path} 6");
             var renderer = ic.GetComponentInChildren<SpriteRenderer>();
             if (renderer == null)
             {
                 throw new NullReferenceException("SpriteRenderer is null");
             }
+            MelonDebug.Msg($"BridgeImage {path} 7");
             if (spriteParam.NewSprite || renderer.sprite == null)
             {
+                if (Math.Min(spriteParam.Rect.Size.X, spriteParam.Rect.Size.Y) > 1024)
+                {
+                    MelonLogger.Warning($"The picture[{path}] is too big, Compress it!!! pleeeease~");
+                }
                 Texture2D texture = new Texture2D((int)spriteParam.Rect.Size.X + 1, (int)spriteParam.Rect.Size.Y + 1, TextureFormat.ARGB32, false);
                 renderer.sprite = Sprite.Create(texture, spriteParam.Rect, spriteParam.Pivot, spriteParam.PixelsPerUnit, spriteParam.Extrude, spriteParam.MeshType, spriteParam.Border, spriteParam.GenerateFallbackPhysicsShape);
-
             }
+            MelonDebug.Msg($"BridgeImage {path} 8");
             if (!ImageConversion.LoadImage(renderer.sprite.texture, image))
             {
                 throw new InvalidOperationException("Image failed to load");
             }
+            MelonDebug.Msg($"BridgeImage {path} 9");
             return ic;
         }
 

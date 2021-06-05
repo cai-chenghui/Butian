@@ -81,7 +81,12 @@ namespace Butian
 
         public static string GetResourcePath(this string physicalPath)
         {
-            return MakeRelativePath(Butian.GetAssetsPath() + "\\", Path.GetDirectoryName(physicalPath)).Replace(Path.DirectorySeparatorChar, '/');
+            return physicalPath.GetResourcePath(Butian.GetAssetsPath());
+        }
+
+        public static string GetResourcePath(this string physicalPath, string basePath)
+        {
+            return MakeRelativePath(basePath + "\\", Path.GetDirectoryName(physicalPath)).Replace(Path.DirectorySeparatorChar, '/');
         }
     }
 }

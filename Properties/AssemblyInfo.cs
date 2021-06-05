@@ -37,7 +37,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
-[assembly: MelonInfo(typeof(Butian.Butian), "Butian", "1.0.0", "LangYue")]
+[assembly: MelonInfo(typeof(Butian.Butian), "Butian", "1.0.0", "墨涤千尘 (LangYueMc)")]
 [assembly: MelonColor(ConsoleColor.Cyan)]
 
 [assembly: MelonGame]

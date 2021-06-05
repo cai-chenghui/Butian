@@ -12,6 +12,17 @@ namespace Butian
         public override void OnApplicationStart()
         {
             Config = Config.LoadConfig();
+            if (Config?.Hylas?.Import == true)
+            {
+                var sw = new Stopwatch();
+                MelonLogger.Msg("Start importing from Hylas.");
+                sw.Start();
+                HylasHelper.Import();
+                sw.Stop();
+                MelonLogger.Msg($"Importing completed, takes: {sw.Elapsed}");
+                Config.Hylas.Import = false;
+                Config.Save();
+            }
             ResourcesLoadPatch.Patch(Harmony);
             Assets.Scan();
         }
@@ -21,11 +32,11 @@ namespace Butian
             if (buildIndex != 0) return;
             if (prefetched) return;
             var sw = new Stopwatch();
-            MelonLogger.Msg("Prefetch start...");
+            MelonLogger.Msg("Start prefetching.");
             sw.Start();
             Assets.Prefetch();
             sw.Stop();
-            MelonLogger.Msg($"Prefetch end, total: {sw.Elapsed}");
+            MelonLogger.Msg($"Prefetching completed, takes: {sw.Elapsed}");
             prefetched = true;
         }
 
