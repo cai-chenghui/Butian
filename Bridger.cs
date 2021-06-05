@@ -99,8 +99,9 @@ namespace Butian
                 case "GameObject":
                     return BridgeImage(path, param, t.TryCast<GameObject>());
                 case "Sprite":
-                    _go_template.name = t?.name ?? path.Replace("/", "");
-                    var go = BridgeImage(path, param, _go_template, true);
+                    var imgGo = Object.Instantiate(_go_template);
+                    imgGo.name = t?.name ?? path.Replace("/", "");
+                    var go = BridgeImage(path, param, imgGo, true);
                     var renderer = go.GetComponentInChildren<SpriteRenderer>();
                     return renderer.sprite;
                 default:
@@ -121,17 +122,18 @@ namespace Butian
             }
             MelonDebug.Msg($"BridgeImage {path} 2");
             var templatePath = spriteParam.Template ?? param.Template;
-            GameObject template = imageObj;
+            GameObject template = null;
             if (templatePath != null)
             {
                 if (isSprite)
                 {
                     var sRenderer = imageObj.GetComponentInChildren<SpriteRenderer>();
                     sRenderer.sprite = Object.Instantiate(templatePath.ResourcesLoad(Il2CppType.Of<Sprite>())?.Cast<Sprite>());
+                    template = imageObj;
                 }
                 else
                 {
-                    template = templatePath.ResourcesLoad(Il2CppType.Of<GameObject>())?.Cast<GameObject>();
+                    template = Object.Instantiate(templatePath.ResourcesLoad(Il2CppType.Of<GameObject>())?.Cast<GameObject>());
                 }
             }
             MelonDebug.Msg($"BridgeImage {path} 3");
@@ -143,10 +145,10 @@ namespace Butian
             MelonDebug.Msg($"BridgeImage {path} 4");
             if (param.Hidden?.Length > 0)
             {
-                var nodes = template.GetComponentsInChildren<Transform>().Where(i => param.Hidden.Contains(i.name));
+                var nodes = ic.GetComponentsInChildren<Transform>().Where(i => param.Hidden.Contains(i.name));
                 foreach (Transform child in nodes)
                 {
-                    child.gameObject.active = false;
+                    child.gameObject.SetActive(false);
                 }
             }
             MelonDebug.Msg($"BridgeImage {path} 5");
@@ -168,7 +170,7 @@ namespace Butian
                 {
                     MelonLogger.Warning($"The picture[{path}] is too big, Compress it!!! pleeeease~");
                 }
-                Texture2D texture = new Texture2D((int)spriteParam.Rect.Size.X + 1, (int)spriteParam.Rect.Size.Y + 1, TextureFormat.ARGB32, false);
+                Texture2D texture = new Texture2D((int)spriteParam.Rect.Size.X, (int)spriteParam.Rect.Size.Y, TextureFormat.ARGB32, false);
                 renderer.sprite = Sprite.Create(texture, spriteParam.Rect, spriteParam.Pivot, spriteParam.PixelsPerUnit, spriteParam.Extrude, spriteParam.MeshType, spriteParam.Border, spriteParam.GenerateFallbackPhysicsShape);
             }
             MelonDebug.Msg($"BridgeImage {path} 8");

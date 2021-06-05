@@ -29,7 +29,12 @@ namespace Butian
     {
         [YamlMember(Alias = "template", Description = "该资源全局模板完整路径，如以钻木取火图片为模板则设置为 Texture/BG/zuanmuquhuo，若此资源是原版没有的，则必须设置 template", ApplyNamingConventions = false)]
         public string Template { get; set; }
-        [YamlMember(Alias = "hidden", Description = "隐藏原版的其他子组件，如战斗小人的袖子 可配置为 hidden: ['youbi1']", ApplyNamingConventions = false)]
+        [YamlMember(Alias = "hidden",
+            Description = @"隐藏原版的其他子组件
+# 双修光柱就是这俩货，干掉
+# hidden: [""Particle System"", ""Particle System(1)""]",
+            ApplyNamingConventions = false
+            )]
         public string[] Hidden { get; set; }
         [YamlMember(Alias = "assets", Description = "使用哪个资源就填上哪个，多个就填多个，必须对应 sprite 的 key，可以为空，默认取第一个", ApplyNamingConventions = false)]
         public string[] Assets { get; set; }
@@ -65,10 +70,10 @@ namespace Butian
         public float PixelsPerUnit { get; set; }
         public uint Extrude { get; set; }
         [YamlMember(Alias = "meshType", ApplyNamingConventions = false)]
-        public SpriteMeshType MeshType { get; set; }
+        public SpriteMeshType MeshType { get; set; } = SpriteMeshType.Tight;
         public Vector4 Border { get; set; }
         [YamlMember(Alias = "generateFallbackPhysicsShape", ApplyNamingConventions = false)]
-        public bool GenerateFallbackPhysicsShape { get; set; }
+        public bool GenerateFallbackPhysicsShape { get; set; } = false;
     }
     internal struct Rect
     {

@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using UnhollowerRuntimeLib;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -71,7 +72,7 @@ namespace Butian
             {
                 if (!cached)
                     Update();
-                return asset;
+                return asset ?? path.ResourcesLoad(Il2CppType.Of<Object>());
 
             }
         }
